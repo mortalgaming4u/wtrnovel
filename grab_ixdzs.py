@@ -114,4 +114,5 @@ def save_chapter(text, idx):
 
 def grab_book(book_url):
     """Main routine to grab the entire book."""
-    print(f"Getting full TO
+   print(f"Getting full TOC from {book_url}")
+
