@@ -1,0 +1,6 @@
+<h2>{{ content.title }}</h2>
+<div>{{ content.body | safe }}</div>
+<nav>
+  <a href="/chapter/{{ content.prev }}">← Prev</a>
+  <a href="/chapter/{{ content.next }}">Next →</a>
+</nav>
