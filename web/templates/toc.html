@@ -1,0 +1,6 @@
+<h1>Table of Contents</h1>
+<ul>
+  {% for chapter in chapters %}
+    <li><a href="/chapter/{{ loop.index }}">{{ chapter }}</a></li>
+  {% endfor %}
+</ul>
