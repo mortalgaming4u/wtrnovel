@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 BASE_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0"
 }
 REQUEST_TIMEOUT = 15
 RETRY_LIMIT = 3
@@ -105,15 +105,24 @@ def save_chapter(text, idx):
         print(f"[WARN] Skipping empty chapter {idx}")
         return
     os.makedirs('chapters', exist_ok=True)
-    fname = f'chapters/ch{idx:03}.text'
+    fname = f'chapters/ch{idx:03}.txt'
     with open(fname, 'w', encoding='utf-8') as f:
         f.write(text)
 
 
 def debug_chapter_dir():
     """List saved chapters for validation."""
-    print("\n[DEBUG] Listing saved chapters:")
-    for fname in sorted(os.listdir('chapters')):
+    if not os.path.exists('chapters'):
+        print("\n[DEBUG] No chapters directory found.")
+        return
+    
+    chapters = [f for f in os.listdir('chapters') if f.endswith('.txt')]
+    if not chapters:
+        print("\n[DEBUG] No chapter files found.")
+        return
+        
+    print(f"\n[DEBUG] Listing {len(chapters)} saved chapters:")
+    for fname in sorted(chapters):
         print(f" - {fname}")
 
 
@@ -150,6 +159,11 @@ if __name__ == '__main__':
     try:
         if len(sys.argv) < 2:
             print("Usage: python grab_ixdzs.py <book_url>")
-            sys.exit(0)
+            sys.exit(1)
         grab_book(sys.argv[1])
+    except KeyboardInterrupt:
+        print("\n[INFO] Script interrupted by user.")
+        sys.exit(0)
     except Exception as e:
+        print(f"[FATAL] Script crashed: {e}")
+        sys.exit(1)
