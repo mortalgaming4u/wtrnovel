@@ -1,5 +1,4 @@
-import json
-
-def save_book(chapters, filename):
+def save_markdown(chapters, filename):
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(chapters, f, ensure_ascii=False, indent=2)
+        for i, ch in enumerate(chapters, 1):
+            f.write(f"# Chapter {i}\n\n{ch['text']}\n\n")
