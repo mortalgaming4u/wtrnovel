@@ -1,5 +1,6 @@
 flask
 gunicorn
 requests
+requests
 beautifulsoup4
 trafilatura
