@@ -119,14 +119,15 @@ def debug_chapter_dir():
 
 def grab_book(book_url):
     """Main routine to grab the entire book."""
-    print(f"Getting full TOC from {book_url}")
+    print(f"[DEBUG] Starting grab_book with URL: {book_url}")
     toc_url = get_full_toc_url(book_url)
+    print(f"[DEBUG] TOC URL resolved: {toc_url}")
     if not toc_url:
         print("[FATAL] Could not resolve TOC URL. Exiting.")
         return
 
     chapter_links = parse_toc(toc_url)
-    print(f"[INFO] Parsed {len(chapter_links)} chapter links.")
+    print(f"[DEBUG] Parsed {len(chapter_links)} chapter links.")
 
     if not chapter_links:
         print("[FATAL] No chapters found. Exiting.")
