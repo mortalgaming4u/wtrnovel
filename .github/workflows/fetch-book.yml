@@ -1,0 +1,34 @@
+name: Fetch Full Book
+
+on:
+  workflow_dispatch:
+    inputs:
+      book_url:
+        description: 'Full book URL (e.g. https://ixdzs.tw/read/576246/)'
+        required: true
+
+jobs:
+  grab:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run grabber script
+        run: python grab_ixdzs.py "${{ github.event.inputs.book_url }}"
+
+      - name: Commit and push chapters
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add chapters/
+          git commit -m "Fetched chapters from ${{ github.event.inputs.book_url }}" || echo "No changes to commit"
+          git push
