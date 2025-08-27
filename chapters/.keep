@@ -1,4 +1,0 @@
-if os.path.exists(CHAPTER_DIR):
-    files = sorted(os.listdir(CHAPTER_DIR))
-else:
-    files = []
