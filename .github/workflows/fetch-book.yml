@@ -1,3 +1,4 @@
+# Trigger first run
 name: Fetch Full Book
 
 on:
