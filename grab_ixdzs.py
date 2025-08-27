@@ -152,4 +152,4 @@ if __name__ == '__main__':
             print("Usage: python grab_ixdzs.py <book_url>")
             sys.exit(0)
         grab_book(sys.argv[1])
-    except Exception
+    except Exception as e:
