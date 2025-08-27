@@ -1,4 +1,4 @@
-# Trigger first run
+# Trigger manually from Actions tab
 name: Fetch Full Book
 
 on:
@@ -26,10 +26,20 @@ jobs:
       - name: Run grabber script
         run: python grab_ixdzs.py "${{ github.event.inputs.book_url }}"
 
-      - name: Commit and push chapters
+      - name: Commit and push this book’s chapters
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add chapters/
-          git commit -m "Fetched chapters from ${{ github.event.inputs.book_url }}" || echo "No changes to commit"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Extract numeric book ID from the URL (matches your Python extract_book_id logic)
+          BOOK_ID=$(echo "${{ github.event.inputs.book_url }}" | grep -oE '[0-9]+' | head -n1)
+          echo "Detected book ID: $BOOK_ID"
+
+          # Stage only this book's folder
+          git add "books/$BOOK_ID"
+
+          # Commit only if there are changes
+          git commit -m "Fetched chapters for book $BOOK_ID from ${{ github.event.inputs.book_url }}" || echo "No changes to commit"
+
+          # Push changes
           git push
