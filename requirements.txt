@@ -4,3 +4,4 @@ requests
 requests
 beautifulsoup4
 trafilatura
+# uses stdlib sqlite3; no extra package needed
