@@ -15,13 +15,17 @@ DELAY_BETWEEN_REQUESTS = 1.5  # seconds
 
 def get_full_toc_url(book_url):
     """Find and return the full table-of-contents URL for the book."""
-    r = requests.get(book_url, headers=BASE_HEADERS, timeout=REQUEST_TIMEOUT)
-    r.encoding = 'utf-8'
-    soup = BeautifulSoup(r.text, 'html.parser')
-    toc_link = soup.find('a', string=lambda t: t and '完整章節' in t)
-    if not toc_link:
-        raise RuntimeError("Full TOC link not found on main book page.")
-    return urljoin(book_url, toc_link['href'])
+    try:
+        r = requests.get(book_url, headers=BASE_HEADERS, timeout=REQUEST_TIMEOUT)
+        r.encoding = 'utf-8'
+        soup = BeautifulSoup(r.text, 'html.parser')
+        toc_link = soup.find('a', string=lambda t: t and '完整章節' in t)
+        if not toc_link:
+            raise ValueError("Full TOC link not found on main book page.")
+        return urljoin(book_url, toc_link['href'])
+    except Exception as e:
+        print(f"[ERROR] Failed to get TOC URL: {e}")
+        sys.exit(1)
 
 
 def parse_toc(toc_url):
@@ -31,23 +35,26 @@ def parse_toc(toc_url):
 
     while toc_url:
         print(f"Parsing TOC page: {toc_url}")
-        r = requests.get(toc_url, headers=BASE_HEADERS, timeout=REQUEST_TIMEOUT)
-        r.encoding = 'utf-8'
-        soup = BeautifulSoup(r.text, 'html.parser')
+        try:
+            r = requests.get(toc_url, headers=BASE_HEADERS, timeout=REQUEST_TIMEOUT)
+            r.encoding = 'utf-8'
+            soup = BeautifulSoup(r.text, 'html.parser')
 
-        # Narrow search to TOC container if exists
-        toc_container = soup.find('div', class_='chapter-list') or soup
-        for a in toc_container.find_all('a', href=True):
-            href = a['href']
-            if '/read/' in href and a.text.strip():
-                full_link = urljoin(toc_url, href)
-                if full_link not in visited:
-                    visited.add(full_link)
-                    links.append(full_link)
+            toc_container = soup.find('div', class_='chapter-list') or soup
+            for a in toc_container.find_all('a', href=True):
+                href = a['href']
+                if '/read/' in href and a.text.strip():
+                    full_link = urljoin(toc_url, href)
+                    if full_link not in visited:
+                        visited.add(full_link)
+                        links.append(full_link)
 
-        # Follow TOC pagination
-        next_link = soup.find('a', string=lambda t: t and '下一頁' in t)
-        toc_url = urljoin(toc_url, next_link['href']) if next_link else None
+            next_link = soup.find('a', string=lambda t: t and '下一頁' in t)
+            toc_url = urljoin(toc_url, next_link['href']) if next_link else None
+
+        except Exception as e:
+            print(f"[ERROR] Failed to parse TOC page: {e}")
+            break
 
     return links
 
@@ -64,13 +71,10 @@ def fetch_and_clean(ch_url):
                 print(f"[WARN] No content found at {ch_url}")
                 return ''
 
-            # Remove unwanted tags
             for tag in content_div(['script', 'style']):
                 tag.decompose()
 
             text = content_div.get_text('\n', strip=True)
-
-            # Remove boilerplate/ad lines
             clean_lines = [
                 line for line in text.splitlines()
                 if 'ixdzs' not in line.lower() and line.strip()
@@ -79,7 +83,7 @@ def fetch_and_clean(ch_url):
 
         except Exception as e:
             print(f"[ERROR] Attempt {attempt}: {e} while fetching {ch_url}")
-            time.sleep(2)  # wait before retry
+            time.sleep(2)
 
     print(f"[FAIL] Could not fetch {ch_url} after {RETRY_LIMIT} attempts.")
     return ''
@@ -103,11 +107,16 @@ def grab_book(book_url):
     chapter_links = parse_toc(toc_url)
     print(f"Found {len(chapter_links)} chapters.")
 
+    success_count = 0
     for i, link in enumerate(chapter_links, start=1):
         print(f"[{i}/{len(chapter_links)}] Fetching: {link}")
         text = fetch_and_clean(link)
-        save_chapter(text, i)
-        time.sleep(DELAY_BETWEEN_REQUESTS)  # be polite
+        if text:
+            save_chapter(text, i)
+            success_count += 1
+        time.sleep(DELAY_BETWEEN_REQUESTS)
+
+    print(f"\n✅ Completed: {success_count}/{len(chapter_links)} chapters saved.")
 
 
 if __name__ == '__main__':
