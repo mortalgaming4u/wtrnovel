@@ -110,6 +110,13 @@ def save_chapter(text, idx):
         f.write(text)
 
 
+def debug_chapter_dir():
+    """List saved chapters for validation."""
+    print("\n[DEBUG] Listing saved chapters:")
+    for fname in sorted(os.listdir('chapters')):
+        print(f" - {fname}")
+
+
 def grab_book(book_url):
     """Main routine to grab the entire book."""
     print(f"Getting full TOC from {book_url}")
@@ -135,6 +142,7 @@ def grab_book(book_url):
         time.sleep(DELAY_BETWEEN_REQUESTS)
 
     print(f"\n✅ Completed: {success_count}/{len(chapter_links)} chapters saved.")
+    debug_chapter_dir()
 
 
 if __name__ == '__main__':
@@ -143,6 +151,4 @@ if __name__ == '__main__':
             print("Usage: python grab_ixdzs.py <book_url>")
             sys.exit(0)
         grab_book(sys.argv[1])
-    except Exception as e:
-        print(f"[FATAL] Script crashed: {e}")
-        sys.exit(0)
+    except Exception
