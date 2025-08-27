@@ -20,14 +20,12 @@ def get_full_toc_url(book_url):
         r.encoding = 'utf-8'
         soup = BeautifulSoup(r.text, 'html.parser')
 
-        # Try to find '完整章節' link
         toc_link = soup.find('a', string=lambda t: t and '完整章節' in t)
         if toc_link:
             resolved = urljoin(book_url, toc_link['href'])
             print(f"[INFO] Found TOC link: {resolved}")
             return resolved
 
-        # Fallback: check if current page is already the TOC
         if soup.find('div', class_='chapter-list'):
             print("[INFO] No TOC link found, using main page as TOC.")
             return book_url
@@ -114,5 +112,37 @@ def save_chapter(text, idx):
 
 def grab_book(book_url):
     """Main routine to grab the entire book."""
-   print(f"Getting full TOC from {book_url}")
+    print(f"Getting full TOC from {book_url}")
+    toc_url = get_full_toc_url(book_url)
+    if not toc_url:
+        print("[FATAL] Could not resolve TOC URL. Exiting.")
+        return
 
+    chapter_links = parse_toc(toc_url)
+    print(f"[INFO] Parsed {len(chapter_links)} chapter links.")
+
+    if not chapter_links:
+        print("[FATAL] No chapters found. Exiting.")
+        return
+
+    success_count = 0
+    for i, link in enumerate(chapter_links, start=1):
+        print(f"[{i}/{len(chapter_links)}] Fetching: {link}")
+        text = fetch_and_clean(link)
+        if text:
+            save_chapter(text, i)
+            success_count += 1
+        time.sleep(DELAY_BETWEEN_REQUESTS)
+
+    print(f"\n✅ Completed: {success_count}/{len(chapter_links)} chapters saved.")
+
+
+if __name__ == '__main__':
+    try:
+        if len(sys.argv) < 2:
+            print("Usage: python grab_ixdzs.py <book_url>")
+            sys.exit(0)
+        grab_book(sys.argv[1])
+    except Exception as e:
+        print(f"[FATAL] Script crashed: {e}")
+        sys.exit(0)
