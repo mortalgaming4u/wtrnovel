@@ -14,16 +14,27 @@ DELAY_BETWEEN_REQUESTS = 1.5  # seconds
 
 
 def get_full_toc_url(book_url):
-    """Find and return the full table-of-contents URL for the book."""
+    """Try to find the full TOC link, or fallback to main page."""
     try:
         r = requests.get(book_url, headers=BASE_HEADERS, timeout=REQUEST_TIMEOUT)
         r.encoding = 'utf-8'
         soup = BeautifulSoup(r.text, 'html.parser')
+
+        # Try to find '完整章節' link
         toc_link = soup.find('a', string=lambda t: t and '完整章節' in t)
-        if not toc_link:
-            print("[ERROR] Full TOC link not found.")
-            return None
-        return urljoin(book_url, toc_link['href'])
+        if toc_link:
+            resolved = urljoin(book_url, toc_link['href'])
+            print(f"[INFO] Found TOC link: {resolved}")
+            return resolved
+
+        # Fallback: check if current page is already the TOC
+        if soup.find('div', class_='chapter-list'):
+            print("[INFO] No TOC link found, using main page as TOC.")
+            return book_url
+
+        print("[ERROR] TOC not found on page.")
+        return None
+
     except Exception as e:
         print(f"[ERROR] Failed to get TOC URL: {e}")
         return None
@@ -103,9 +114,4 @@ def save_chapter(text, idx):
 
 def grab_book(book_url):
     """Main routine to grab the entire book."""
-    print(f"Getting full TOC from {book_url}")
-    toc_url = get_full_toc_url(book_url)
-    if not toc_url:
-        print("[FATAL] Could not resolve TOC URL. Exiting.")
-        return
-
+    print(f"Getting full TO
