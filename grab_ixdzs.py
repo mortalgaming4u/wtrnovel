@@ -21,11 +21,12 @@ def get_full_toc_url(book_url):
         soup = BeautifulSoup(r.text, 'html.parser')
         toc_link = soup.find('a', string=lambda t: t and '完整章節' in t)
         if not toc_link:
-            raise ValueError("Full TOC link not found on main book page.")
+            print("[ERROR] Full TOC link not found.")
+            return None
         return urljoin(book_url, toc_link['href'])
     except Exception as e:
         print(f"[ERROR] Failed to get TOC URL: {e}")
-        sys.exit(1)
+        return None
 
 
 def parse_toc(toc_url):
@@ -104,23 +105,7 @@ def grab_book(book_url):
     """Main routine to grab the entire book."""
     print(f"Getting full TOC from {book_url}")
     toc_url = get_full_toc_url(book_url)
-    chapter_links = parse_toc(toc_url)
-    print(f"Found {len(chapter_links)} chapters.")
+    if not toc_url:
+        print("[FATAL] Could not resolve TOC URL. Exiting.")
+        return
 
-    success_count = 0
-    for i, link in enumerate(chapter_links, start=1):
-        print(f"[{i}/{len(chapter_links)}] Fetching: {link}")
-        text = fetch_and_clean(link)
-        if text:
-            save_chapter(text, i)
-            success_count += 1
-        time.sleep(DELAY_BETWEEN_REQUESTS)
-
-    print(f"\n✅ Completed: {success_count}/{len(chapter_links)} chapters saved.")
-
-
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Usage: python grab_ixdzs.py <book_url>")
-        sys.exit(1)
-    grab_book(sys.argv[1])
