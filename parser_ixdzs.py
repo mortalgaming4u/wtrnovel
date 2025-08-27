@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from utils import safe_request  # Make sure utils.py is present
+from utils import safe_request
 
 def get_chapter_urls(toc_url):
     r = safe_request(toc_url)
